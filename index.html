@@ -34,7 +34,8 @@
   <aside class="sidebar">
     <h1>Dashboard</h1>
     <nav>
-      <a class="active" href="#">✓ To-Do</a>
+      <a class="active" href="#todo">✓ To-Do</a>
+      <a href="#calendar">📅 Calendar</a>
     </nav>
     <div class="side-bottom">
       <span id="user" class="muted small"></span>
@@ -64,7 +65,26 @@
       <div class="bar"><div id="bar"></div></div>
     </section>
 
-    <section class="card todo">
+    <section id="calendar" class="card cal">
+      <div class="cal-head">
+        <h3 id="cal-title">Calendar</h3>
+        <div class="cal-nav">
+          <button id="cal-prev" type="button" aria-label="Previous month">‹</button>
+          <button id="cal-today" type="button">Today</button>
+          <button id="cal-next" type="button" aria-label="Next month">›</button>
+          <button id="event-add" type="button" class="primary">+ Event</button>
+        </div>
+      </div>
+      <div id="cal-weekdays" class="cal-grid cal-weekdays"></div>
+      <div id="cal-grid" class="cal-grid"></div>
+      <div class="legend muted small">
+        <span><i class="ci event"></i> Event</span>
+        <span><i class="ci todo-high"></i> Deadline (by priority)</span>
+      </div>
+      <div id="day-detail" class="day-detail"></div>
+    </section>
+
+    <section id="todo" class="card todo">
       <h3>To-Do List <span id="sync" class="muted small"></span></h3>
       <form id="form">
         <input id="text" placeholder="What needs doing?" autocomplete="off" required>
@@ -89,6 +109,19 @@
     </section>
   </main>
 </div>
+
+<dialog id="event-dialog">
+  <form id="event-form" class="dialog-form">
+    <h3>New event</h3>
+    <input id="ev-title" placeholder="Event title" autocomplete="off" required>
+    <label class="muted small">Date <input id="ev-date" type="date" required></label>
+    <label class="muted small">Time (optional) <input id="ev-time" type="time"></label>
+    <div class="dialog-actions">
+      <button type="button" id="ev-cancel">Cancel</button>
+      <button type="submit" class="primary">Save</button>
+    </div>
+  </form>
+</dialog>
 
 <script type="module" src="app.js"></script>
 </body>
