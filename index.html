@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Login screen -->
+<section id="auth" class="auth" hidden>
+  <form id="auth-form" class="card auth-card">
+    <h1>Dashboard</h1>
+    <p class="muted">Sign in to see your to-do list on every device.</p>
+    <input id="email" type="email" placeholder="Email" autocomplete="email" required>
+    <input id="password" type="password" placeholder="Password (min. 6 characters)" autocomplete="current-password" minlength="6" required>
+    <button type="submit" id="auth-submit">Sign in</button>
+    <button type="button" id="auth-toggle" class="ghost">No account yet? Create one</button>
+    <p id="auth-msg" class="msg" role="alert"></p>
+  </form>
+</section>
+
+<!-- Setup warning (shown until firebase-config.js is filled in) -->
+<section id="setup" class="auth" hidden>
+  <div class="card auth-card">
+    <h1>Setup needed</h1>
+    <p>Open <code>firebase-config.js</code> and paste in your Firebase settings. See README.md for the steps.</p>
+  </div>
+</section>
+
+<!-- Dashboard -->
+<div id="app" class="layout" hidden>
+  <aside class="sidebar">
+    <h1>Dashboard</h1>
+    <nav>
+      <a class="active" href="#">✓ To-Do</a>
+    </nav>
+    <div class="side-bottom">
+      <span id="user" class="muted small"></span>
+      <button id="theme" class="ghost" type="button">Toggle theme</button>
+      <button id="logout" class="ghost" type="button">Sign out</button>
+    </div>
+  </aside>
+
+  <main>
+    <header class="top">
+      <div>
+        <h2 id="greeting">Hello</h2>
+        <p id="date" class="muted"></p>
+      </div>
+      <div id="clock" class="clock"></div>
+    </header>
+
+    <section class="stats">
+      <div class="card"><span class="muted">Total</span><strong id="s-total">0</strong></div>
+      <div class="card"><span class="muted">Open</span><strong id="s-open">0</strong></div>
+      <div class="card"><span class="muted">Done</span><strong id="s-done">0</strong></div>
+      <div class="card"><span class="muted">Overdue</span><strong id="s-overdue">0</strong></div>
+    </section>
+
+    <section class="card progress-card">
+      <div class="row"><span>Progress</span><span id="pct">0%</span></div>
+      <div class="bar"><div id="bar"></div></div>
+    </section>
+
+    <section class="card todo">
+      <h3>To-Do List <span id="sync" class="muted small"></span></h3>
+      <form id="form">
+        <input id="text" placeholder="What needs doing?" autocomplete="off" required>
+        <select id="priority" aria-label="Priority">
+          <option value="low">Low</option>
+          <option value="med" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+        <input id="due" type="date" aria-label="Due date">
+        <button type="submit">Add</button>
+      </form>
+
+      <div class="filters">
+        <button data-f="all" class="chip active" type="button">All</button>
+        <button data-f="open" class="chip" type="button">Open</button>
+        <button data-f="done" class="chip" type="button">Done</button>
+        <button id="clear" class="chip danger" type="button">Clear completed</button>
+      </div>
+
+      <ul id="list"></ul>
+      <p id="empty" class="muted center" hidden>Nothing here. Add a task above.</p>
+    </section>
+  </main>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
