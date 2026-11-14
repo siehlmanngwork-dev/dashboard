@@ -32,10 +32,24 @@ const db = getFirestore(app);
 let todos = [];
 let filter = "all";
 let events = [];
+let customTypes = [];
+let pendingType = null;
 let unsubscribes = [];
 let uid = null;
 const col = () => collection(db, "users", uid, "todos");
 const ecol = () => collection(db, "users", uid, "events");
+const tcol = () => collection(db, "users", uid, "eventTypes");
+
+// Event types: each has a name and a colour. Built-ins plus your own (stored in Firestore).
+const DEFAULT_TYPES = [
+  { id: "meeting", name: "Meeting", color: "#4f6df5" },
+  { id: "study", name: "Study", color: "#8b5cf6" },
+  { id: "personal", name: "Personal", color: "#14b8a6" },
+  { id: "birthday", name: "Birthday", color: "#ec4899" },
+  { id: "other", name: "Other", color: "#64748b" },
+];
+const allTypes = () => [...DEFAULT_TYPES, ...customTypes];
+const typeOf = (e) => allTypes().find((t) => t.id === e.type) || { name: "Event", color: "#4f6df5" };
 const today = () => new Date().toLocaleDateString("sv"); // YYYY-MM-DD in local time
 
 // ---------- Clock ----------
@@ -85,7 +99,7 @@ onAuthStateChanged(auth, (user) => {
   unsubscribes.forEach((u) => u());
   unsubscribes = [];
   if (!user) {
-    uid = null; todos = []; events = [];
+    uid = null; todos = []; events = []; customTypes = [];
     show("app", false); show("auth", true);
     return;
   }
@@ -103,6 +117,13 @@ onAuthStateChanged(auth, (user) => {
   }));
   unsubscribes.push(onSnapshot(ecol(), (snap) => {
     events = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderCalendar();
+  }, (err) => {
+    $("sync").textContent = "· sync error: " + err.code;
+  }));
+  unsubscribes.push(onSnapshot(tcol(), (snap) => {
+    customTypes = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderTypeOptions();
     renderCalendar();
   }, (err) => {
     $("sync").textContent = "· sync error: " + err.code;
@@ -183,12 +204,17 @@ const dayItems = (k) => ({
   evs: events.filter((e) => e.date === k).sort((a, b) => (a.time || "").localeCompare(b.time || "")),
 });
 
-function chip(cls, text) {
+function chip(cls, text, color) {
   const s = document.createElement("span");
   s.className = "ci " + cls;
   s.textContent = text;
+  if (color) s.style.setProperty("--c", color);
   return s;
 }
+// Events: solid pill in the type's colour. Tasks: outlined card with a checkbox glyph
+// and a priority-coloured edge, so the two kinds are distinguishable at a glance.
+const eventChip = (e, withTime = true) => chip("event", (withTime && e.time ? e.time + " " : "") + e.title, typeOf(e).color);
+const taskChip = (t, text = t.text) => chip("task p-" + t.priority + (t.done ? " done" : ""), (t.done ? "☑ " : "☐ ") + text);
 
 function renderCalendar() {
   const y = calMonth.getFullYear(), m = calMonth.getMonth();
@@ -214,8 +240,8 @@ function renderCalendar() {
     marks.className = "marks";
 
     const all = [
-      ...evs.map((e) => chip("event", (e.time ? e.time + " " : "") + e.title)),
-      ...deadlines.map((t) => chip((t.done ? "done " : "") + "todo-" + t.priority, t.text)),
+      ...evs.map((e) => eventChip(e)),
+      ...deadlines.map((t) => taskChip(t)),
     ];
     all.slice(0, 3).forEach((c) => marks.append(c));
     if (all.length > 3) marks.append(chip("more", "+" + (all.length - 3)));
@@ -254,7 +280,7 @@ function renderDayDetail() {
     del.textContent = "×";
     del.title = "Delete event";
     del.onclick = () => deleteDoc(doc(ecol(), e.id));
-    row.append(chip("event", "Event"), label, del);
+    row.append(chip("event", typeOf(e).name, typeOf(e).color), label, del);
     box.append(row);
   }
   for (const t of deadlines) {
@@ -267,10 +293,49 @@ function renderDayDetail() {
     const label = document.createElement("span");
     label.className = "label";
     label.textContent = t.text;
-    row.append(cb, label, chip("todo-" + t.priority, "Deadline"));
+    row.append(cb, label, chip("task p-" + t.priority, "Deadline"));
     box.append(row);
   }
 }
+
+function renderLegend() {
+  const lg = $("legend");
+  lg.replaceChildren();
+  for (const t of allTypes()) {
+    const s = document.createElement("span");
+    s.append(chip("event swatch", "", t.color), " " + t.name);
+    lg.append(s);
+  }
+  const task = document.createElement("span");
+  task.append(chip("task swatch p-med", ""), " Task deadline");
+  lg.append(task);
+}
+
+function renderTypeOptions() {
+  const sel = $("ev-type");
+  const keep = pendingType || sel.value || "meeting";
+  sel.replaceChildren(...allTypes().map((t) => {
+    const o = document.createElement("option");
+    o.value = t.id;
+    o.textContent = t.name;
+    return o;
+  }));
+  if (allTypes().some((t) => t.id === keep)) sel.value = keep;
+  if (pendingType && allTypes().some((t) => t.id === pendingType)) pendingType = null;
+  renderLegend();
+}
+renderTypeOptions();
+
+$("type-new-btn").onclick = () => { $("type-new").hidden = !$("type-new").hidden; $("type-name").focus(); };
+$("type-save").onclick = async () => {
+  const name = $("type-name").value.trim();
+  if (!name || !uid) return;
+  $("type-name").value = "";
+  $("type-new").hidden = true;
+  const ref = await addDoc(tcol(), { name, color: $("type-color").value });
+  pendingType = ref.id;
+  renderTypeOptions();
+};
 
 const shiftMonth = (n) => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + n, 1); renderCalendar(); };
 $("cal-prev").onclick = () => shiftMonth(-1);
@@ -284,7 +349,10 @@ $("cal-today").onclick = () => {
 // Add-event dialog
 const dlg = $("event-dialog");
 $("event-add").onclick = () => {
+  const type = $("ev-type").value;
   $("event-form").reset();
+  $("ev-type").value = type; // remember the last-used type
+  $("type-new").hidden = true;
   $("ev-date").value = selectedDay;
   dlg.showModal();
   $("ev-title").focus();
@@ -296,7 +364,7 @@ $("event-form").onsubmit = async (e) => {
   const date = $("ev-date").value;
   if (!title || !date || !uid) return;
   dlg.close();
-  await addDoc(ecol(), { title, date, time: $("ev-time").value, created: serverTimestamp() });
+  await addDoc(ecol(), { title, date, type: $("ev-type").value, time: $("ev-time").value, created: serverTimestamp() });
   selectedDay = date;
   calMonth = new Date(date + "T00:00"); calMonth.setDate(1);
   renderCalendar();

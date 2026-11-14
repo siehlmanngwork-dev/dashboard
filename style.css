@@ -69,12 +69,22 @@ button.primary { background: var(--accent); color: #fff; border: none; font-weig
 .num { font-size: 12px; font-weight: 600; align-self: flex-start; }
 .marks { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .ci { display: block; font-size: 11px; line-height: 1.4; padding: 0 6px; border-radius: 4px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: normal; }
-.ci.event { background: var(--accent); }
-.ci.todo-low { background: var(--low); } .ci.todo-med { background: var(--med); } .ci.todo-high { background: var(--high); }
-.ci.done { opacity: .5; text-decoration: line-through; }
+/* Events: solid pill in the event type's colour (--c is set from JS) */
+.ci.event { background: var(--c, var(--accent)); font-weight: 600; border-radius: 99px; padding: 0 8px; }
+/* Tasks: outlined card with a priority-coloured left edge and a checkbox glyph */
+.ci.task { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-left: 4px solid var(--pc, var(--med)); border-radius: 3px; padding: 0 5px; }
+.ci.task.p-low { --pc: var(--low); } .ci.task.p-med { --pc: var(--med); } .ci.task.p-high { --pc: var(--high); }
+.ci.task.done { opacity: .55; text-decoration: line-through; }
+.ci.swatch { width: 14px; height: 14px; }
+.ci.event.swatch { border-radius: 50%; }
+.type-row { display: flex; gap: 8px; }
+.type-row select { flex: 1; }
+.type-new { display: flex; gap: 8px; align-items: center; }
+.type-new input[type=text], .type-new #type-name { flex: 1; min-width: 0; }
+.type-new input[type=color] { width: 44px; height: 38px; padding: 2px; cursor: pointer; }
 .ci.more { background: none; color: var(--muted); }
-.legend { display: flex; gap: 16px; margin-top: 10px; }
-.legend .ci { display: inline-block; width: 12px; height: 12px; padding: 0; vertical-align: middle; }
+.legend { display: flex; gap: 6px 16px; flex-wrap: wrap; margin-top: 10px; }
+.legend .ci { display: inline-block; padding: 0; vertical-align: middle; }
 .day-detail { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; }
 .day-detail h4 { margin: 0 0 8px; text-transform: capitalize; }
 .day-detail .ci { display: inline-block; flex: none; }
@@ -106,6 +116,7 @@ code { background: var(--bg); padding: 1px 6px; border-radius: 4px; }
   .clock { font-size: 24px; }
   .day { min-height: 52px; padding: 4px; }
   .marks { flex-direction: row; flex-wrap: wrap; gap: 3px; }
-  .marks .ci { font-size: 0; width: 7px; height: 7px; padding: 0; border-radius: 50%; }
+  .marks .ci { font-size: 0; width: 7px; height: 7px; padding: 0; border-radius: 50%; border-width: 0; }
+  .marks .ci.task { border: 2px solid var(--pc, var(--med)); background: var(--panel); border-radius: 2px; width: 8px; height: 8px; }
   .marks .ci.more { font-size: 10px; width: auto; height: auto; }
 }
